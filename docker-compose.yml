@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:14-alpine
+    restart: always
+    user: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=url_shortening
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/home/mikess/db
+volumes:
+  db:
+    driver: local

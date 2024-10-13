@@ -1,15 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
     "rootDir": "./src",
     "outDir": "./dist",
+    "target": "ES6",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "typeRoots": ["./node_modules/@types", "./@types"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "migrations/1728756069656-CreateUrl.ts"],
   "exclude": ["node_modules"]
 }
 
