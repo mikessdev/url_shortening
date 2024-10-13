@@ -47,7 +47,13 @@ export class UrlService implements IUrlService {
   async getOriginalUrl(shortenedUrl: string): Promise<string | null> {
     const result = await this.urlRepository.findByShortenedUrl(shortenedUrl);
 
-    return result?.originalUrl || null;
+    if (!result) {
+      return null;
+    }
+
+    const { id, totalAccesses, originalUrl } = result;
+    await this.urlRepository.update(id, { totalAccesses: totalAccesses + 1 });
+    return originalUrl;
   }
 
   async getAll(): Promise<Url[]> {

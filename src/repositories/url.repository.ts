@@ -3,7 +3,7 @@ import { Url as UrlModel } from '../models/url.model';
 
 export interface IUrlRepository {
   create: (url: Url) => Promise<Url>;
-  update: (urlId: number, url: Partial<Url>) => Promise<Url>;
+  update: (urlId: number, url: Partial<Url>) => Promise<number[]>;
   findByShortenedUrl: (shortenedUrl: string) => Promise<Url | null>;
   getAll: () => Promise<Url[]>;
 }
@@ -20,9 +20,13 @@ export class UrlRepository implements IUrlRepository {
     }
   }
 
-  async update(urlId: number, url: Partial<Url>): Promise<Url> {
+  async update(urlId: number, url: Partial<Url>): Promise<number[]> {
     try {
-      return {} as Url;
+      const result = await this.urlModel.update(url, {
+        where: { id: urlId },
+      });
+
+      return result;
     } catch (error) {
       console.error('Erro ao atualizar URL:', error);
       throw new Error('Erro ao atualizar URL');
