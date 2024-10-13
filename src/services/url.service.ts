@@ -8,10 +8,21 @@ export interface IUrlService {
   createShortUrl: (urlDto: UrlDTO) => Promise<Url>;
   getOriginalUrl: (shortId: string) => Promise<string | null>;
   getAll: () => Promise<Url[]>;
+  update: (id: number, urlDto: UrlDTO) => Promise<number[]>;
 }
 
 export class UrlService implements IUrlService {
   constructor(private urlRepository: IUrlRepository) {}
+
+  async update(id: number, urlDto: UrlDTO): Promise<number[]> {
+    const { originalUrl } = urlDto;
+
+    const result = await this.urlRepository.update(id, {
+      originalUrl,
+    });
+
+    return result;
+  }
 
   async createShortUrl(urlDto: UrlDTO): Promise<Url> {
     const { originalUrl } = urlDto;

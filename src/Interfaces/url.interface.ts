@@ -5,5 +5,5 @@ export interface UrlAttributes {
   totalAccesses: number;
   createdAt: Date;
   updatedAt: Date;
-  deletedAt: Date | null;
+  deletedAt?: Date | null;
 }

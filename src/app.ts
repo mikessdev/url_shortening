@@ -1,6 +1,7 @@
 import express from 'express';
 import { errorHandler } from './middlewares/error.middleware';
 import { UrlRoutes } from './routes/url.routes';
+import { UserRoutes } from './routes/user.routes';
 import appDataSource from './config/database';
 
 export class App {
@@ -20,13 +21,15 @@ export class App {
 
   private initializeRoutes(): void {
     const urlRoutes = new UrlRoutes();
-    this.app.use('/', urlRoutes.router);
+    const userRoutes = new UserRoutes();
+
+    this.app.use('/url', urlRoutes.router);
+    this.app.use('/user', userRoutes.router);
   }
 
   private async initializeDatabase(): Promise<void> {
     try {
       await appDataSource.sync();
-
       console.log('Data Source has been initialized!');
     } catch (err) {
       console.error('Error during Data Source initialization:', err);

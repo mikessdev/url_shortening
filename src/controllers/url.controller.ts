@@ -8,10 +8,30 @@ export interface IUrlController {
   shortenUrl: (req: Request, res: Response) => Promise<Response>;
   redirectUrl: (req: Request, res: Response) => Promise<Response | void>;
   getAll: (req: Request, res: Response) => Promise<Response | void>;
+  update: (req: Request, res: Response) => Promise<Response | void>;
 }
 
 export class UrlController implements IUrlController {
   constructor(private urlService: IUrlService) {}
+
+  async update(req: Request, res: Response): Promise<Response | void> {
+    const { id } = req.params;
+    const urlDto = plainToClass(UrlDTO, req.body);
+
+    const errors = await validate(urlDto);
+
+    if (errors.length > 0) {
+      return res.status(400).json({ message: 'Validation failed', errors });
+    }
+
+    const updatedUrl = await this.urlService.update(Number(id), urlDto);
+
+    if (!updatedUrl) {
+      return res.status(500).json({ message: 'Error updating URL' });
+    }
+
+    return res.status(200).json({ url: updatedUrl });
+  }
 
   async shortenUrl(req: Request, res: Response): Promise<Response> {
     const urlDto = plainToClass(UrlDTO, {

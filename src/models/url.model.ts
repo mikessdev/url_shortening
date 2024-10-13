@@ -3,7 +3,10 @@ import appDataSource from '../config/database';
 import { UrlAttributes } from '../Interfaces/url.interface';
 
 export interface UrlCreationAttributes
-  extends Optional<UrlAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+  extends Optional<
+    UrlAttributes,
+    'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
+  > {}
 
 export class Url
   extends Model<UrlAttributes, UrlCreationAttributes>
@@ -15,6 +18,7 @@ export class Url
   public totalAccesses!: number;
   public createdAt!: Date;
   public updatedAt!: Date;
+  public deletedAt?: Date | null;
 }
 
 Url.init(
@@ -45,12 +49,16 @@ Url.init(
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    deletedAt: {
+      type: DataTypes.DATE,
+      defaultValue: null, // Você pode definir o valor padrão como null
+    },
   },
   {
     sequelize: appDataSource,
     modelName: 'url',
     timestamps: true,
-    paranoid: true,
+    paranoid: true, // Mantém a exclusão suave
     freezeTableName: true,
   }
 );
