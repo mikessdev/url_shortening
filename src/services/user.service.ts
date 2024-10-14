@@ -14,10 +14,15 @@ export interface LoginResponse {
 export interface IUserService {
   create: (user: UserDTO) => Promise<User | string>;
   login: (email: string, password: string) => Promise<LoginResponse | string>;
+  getByFirebaseId: (firebaseId: string) => Promise<User | null>;
 }
 
 export class UserService implements IUserService {
   constructor(private userRepository: IUserRepository) {}
+
+  async getByFirebaseId(firebaseId: string): Promise<User | null> {
+    return await this.userRepository.getByFirebaseId(firebaseId);
+  }
 
   async login(
     email: string,

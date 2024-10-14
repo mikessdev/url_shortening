@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import appDataSource from '../config/database';
 import { UrlAttributes } from '../Interfaces/url.interface';
+import { User } from './user.model';
 
 export interface UrlCreationAttributes
   extends Optional<
@@ -19,6 +20,7 @@ export class Url
   public createdAt!: Date;
   public updatedAt!: Date;
   public deletedAt?: Date | null;
+  public userId?: number;
 }
 
 Url.init(
@@ -51,14 +53,27 @@ Url.init(
     },
     deletedAt: {
       type: DataTypes.DATE,
-      defaultValue: null, // Você pode definir o valor padrão como null
+      defaultValue: null,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: User,
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
     },
   },
   {
     sequelize: appDataSource,
     modelName: 'url',
     timestamps: true,
-    paranoid: true, // Mantém a exclusão suave
+    paranoid: true,
     freezeTableName: true,
   }
 );
+
+Url.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Url, { foreignKey: 'userId', as: 'urls' });

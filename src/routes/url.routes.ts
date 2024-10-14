@@ -3,6 +3,8 @@ import { IUrlController, UrlController } from '../controllers/url.controller';
 import { IUrlService, UrlService } from '../services/url.service';
 import { IUrlRepository, UrlRepository } from '../repositories/url.repository';
 import AuthMiddleware from '../middlewares/auth.middleware';
+import { UserRepository } from '../repositories/user.repository';
+import { UserService } from '../services/user.service';
 export class UrlRoutes {
   public router: Router;
   private urlController: IUrlController;
@@ -16,8 +18,10 @@ export class UrlRoutes {
   }
 
   private initializeControllers(): IUrlController {
-    const repository: IUrlRepository = new UrlRepository();
-    const service: IUrlService = new UrlService(repository);
+    const urlRepository: IUrlRepository = new UrlRepository();
+    const userRepository = new UserRepository();
+    const userService = new UserService(userRepository);
+    const service: IUrlService = new UrlService(urlRepository, userService);
     return new UrlController(service);
   }
 

@@ -6,7 +6,7 @@ type FirebaseAdmin = admin.app.App;
 type Credential = { credential: admin.credential.Credential };
 
 class AuthMiddleware {
-  private firebase: FirebaseAdmin;
+  firebase: FirebaseAdmin;
   private readonly serviceAccount: ServiceAccount;
 
   private firebaseConfig: Credential;

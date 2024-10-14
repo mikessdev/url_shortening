@@ -3,6 +3,7 @@ import { IUrlService } from '../services/url.service';
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
 import { UrlDTO } from '../Dtos/url.dto';
+import AuthMiddleware from '../middlewares/auth.middleware';
 
 export interface IUrlController {
   shortenUrl: (req: Request, res: Response) => Promise<Response>;
@@ -12,7 +13,11 @@ export interface IUrlController {
 }
 
 export class UrlController implements IUrlController {
-  constructor(private urlService: IUrlService) {}
+  private authProvider: AuthMiddleware;
+
+  constructor(private urlService: IUrlService) {
+    this.authProvider = new AuthMiddleware();
+  }
 
   async update(req: Request, res: Response): Promise<Response | void> {
     const { id } = req.params;
@@ -34,17 +39,27 @@ export class UrlController implements IUrlController {
   }
 
   async shortenUrl(req: Request, res: Response): Promise<Response> {
+    const { authorization } = req.headers;
     const urlDto = plainToClass(UrlDTO, {
       originalUrl: req.body.originalUrl,
     });
-
     const errors = await validate(urlDto);
+    let firebaseId: string = '';
 
     if (errors.length > 0) {
       return res.status(400).json({ message: 'Validation failed', errors });
     }
 
-    const shortUrl = await this.urlService.createShortUrl(urlDto);
+    if (!!authorization) {
+      try {
+        const userCredential = await this.authProvider.firebase
+          .auth()
+          .verifyIdToken(authorization.replace('Bearer ', ''));
+        firebaseId = userCredential.uid;
+      } catch (error) {}
+    }
+
+    const shortUrl = await this.urlService.createShortUrl(urlDto, firebaseId);
 
     if (!shortUrl) {
       return res.status(500).json({ message: 'Error shortening the URL' });

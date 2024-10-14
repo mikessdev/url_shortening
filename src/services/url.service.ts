@@ -3,16 +3,24 @@ import { UrlAttributes as Url } from '../Interfaces/url.interface';
 import { IUrlRepository } from '../repositories/url.repository';
 import * as base62 from 'base62-ts';
 import crypto from 'crypto';
+import { IUserService, UserService } from '../services/user.service';
+import {
+  IUserRepository,
+  UserRepository,
+} from '../repositories/user.repository';
 
 export interface IUrlService {
-  createShortUrl: (urlDto: UrlDTO) => Promise<Url>;
+  createShortUrl: (urlDto: UrlDTO, firebaseId: string) => Promise<Url>;
   getOriginalUrl: (shortId: string) => Promise<string | null>;
   getAll: () => Promise<Url[]>;
   update: (id: number, urlDto: UrlDTO) => Promise<number[]>;
 }
 
 export class UrlService implements IUrlService {
-  constructor(private urlRepository: IUrlRepository) {}
+  constructor(
+    private urlRepository: IUrlRepository,
+    private userService: IUserService
+  ) {}
 
   async update(id: number, urlDto: UrlDTO): Promise<number[]> {
     const { originalUrl } = urlDto;
@@ -24,7 +32,7 @@ export class UrlService implements IUrlService {
     return result;
   }
 
-  async createShortUrl(urlDto: UrlDTO): Promise<Url> {
+  async createShortUrl(urlDto: UrlDTO, firebaseId: string): Promise<Url> {
     const { originalUrl } = urlDto;
 
     let shortenedUrl: string;
@@ -41,7 +49,7 @@ export class UrlService implements IUrlService {
 
     if (existingUrl) {
       throw new Error(
-        'Não foi possível encurtar o URL no momento, tente novamente mais tarde.'
+        'Unable to shorten the URL at this time. Please try again later.'
       );
     }
 
@@ -50,9 +58,16 @@ export class UrlService implements IUrlService {
       shortenedUrl,
     } as Url;
 
-    const result = await this.urlRepository.create(url);
+    if (firebaseId) {
+      const user = await this.userService.getByFirebaseId(firebaseId);
+      if (user) {
+        url.userId = user.id;
+      } else {
+        console.warn(`User with Firebase ID ${firebaseId} not found.`);
+      }
+    }
 
-    return result;
+    return await this.urlRepository.create(url);
   }
 
   async getOriginalUrl(shortenedUrl: string): Promise<string | null> {
