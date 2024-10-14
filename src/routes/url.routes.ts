@@ -38,13 +38,13 @@ export class UrlRoutes {
     );
 
     this.router.get(
-      '/url/findAll',
+      '/url/getAll',
       this.authMiddleware.authenticate.bind(this.authMiddleware),
-      this.wrapAsync(this.urlController.getAll.bind(this.urlController))
+      this.wrapAsync(this.urlController.getAllByUser.bind(this.urlController))
     );
 
     this.router.put(
-      '/url/update',
+      '/url/update/:id',
       this.authMiddleware.authenticate.bind(this.authMiddleware),
       this.wrapAsync(this.urlController.update.bind(this.urlController))
     );

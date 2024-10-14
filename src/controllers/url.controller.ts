@@ -8,7 +8,7 @@ import AuthMiddleware from '../middlewares/auth.middleware';
 export interface IUrlController {
   shortenUrl: (req: Request, res: Response) => Promise<Response>;
   redirectUrl: (req: Request, res: Response) => Promise<Response | void>;
-  getAll: (req: Request, res: Response) => Promise<Response | void>;
+  getAllByUser: (req: Request, res: Response) => Promise<Response | void>;
   update: (req: Request, res: Response) => Promise<Response | void>;
 }
 
@@ -22,6 +22,7 @@ export class UrlController implements IUrlController {
   async update(req: Request, res: Response): Promise<Response | void> {
     const { id } = req.params;
     const urlDto = plainToClass(UrlDTO, req.body);
+    console.log(req);
 
     const errors = await validate(urlDto);
 
@@ -35,7 +36,7 @@ export class UrlController implements IUrlController {
       return res.status(500).json({ message: 'Error updating URL' });
     }
 
-    return res.status(200).json({ url: updatedUrl });
+    return res.status(200).json({ updatedUrl });
   }
 
   async shortenUrl(req: Request, res: Response): Promise<Response> {
@@ -82,8 +83,23 @@ export class UrlController implements IUrlController {
     return res.status(404).json({ message: 'URL not found' });
   }
 
-  async getAll(req: Request, res: Response): Promise<Response | void> {
-    const result = await this.urlService.getAll();
+  async getAllByUser(req: Request, res: Response): Promise<Response | void> {
+    const { authorization } = req.headers;
+    let firebaseId: string = '';
+
+    if (!!authorization) {
+      try {
+        const userCredential = await this.authProvider.firebase
+          .auth()
+          .verifyIdToken(authorization.replace('Bearer ', ''));
+
+        firebaseId = userCredential.uid;
+      } catch (error) {
+        return res.status(403).json({ message: 'User not found' });
+      }
+    }
+
+    const result = await this.urlService.getAll(firebaseId);
     return res.status(201).json({ result });
   }
 }

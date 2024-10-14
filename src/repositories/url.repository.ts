@@ -5,18 +5,31 @@ export interface IUrlRepository {
   create: (url: Url) => Promise<Url>;
   update: (urlId: number, url: Partial<Url>) => Promise<number[]>;
   findByShortenedUrl: (shortenedUrl: string) => Promise<Url | null>;
-  getAll: () => Promise<Url[]>;
+  getAllByUserId: (userId: number) => Promise<Url[]>;
+  getById: (id: number) => Promise<Url | null>;
 }
 
 export class UrlRepository implements IUrlRepository {
   private readonly urlModel = UrlModel;
 
+  async getById(id: number): Promise<Url | null> {
+    try {
+      return await this.urlModel.findOne({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      console.error('Error finding URL by ID:', error);
+      return null;
+    }
+  }
   async create(url: Url): Promise<Url> {
     try {
       return await this.urlModel.create(url);
     } catch (error) {
-      console.error('Erro ao criar URL:', error);
-      throw new Error('Erro ao criar URL');
+      console.error('Error creating URL:', error);
+      throw new Error('Error creating URL');
     }
   }
 
@@ -28,8 +41,8 @@ export class UrlRepository implements IUrlRepository {
 
       return result;
     } catch (error) {
-      console.error('Erro ao atualizar URL:', error);
-      throw new Error('Erro ao atualizar URL');
+      console.error('Error updating URL:', error);
+      throw new Error('Error updating URL');
     }
   }
 
@@ -41,16 +54,20 @@ export class UrlRepository implements IUrlRepository {
         },
       });
     } catch (error) {
-      console.error('Erro ao buscar URL pelo original:', error);
+      console.error('Error finding URL by shortened URL:', error);
       return null;
     }
   }
 
-  async getAll(): Promise<Url[]> {
+  async getAllByUserId(userId: number): Promise<Url[]> {
     try {
-      return await this.urlModel.findAll();
+      return await this.urlModel.findAll({
+        where: {
+          userId,
+        },
+      });
     } catch (error) {
-      console.error('Erro ao buscar todas as URLs:', error);
+      console.error('Error fetching all URLs for the user:', error);
       return [];
     }
   }

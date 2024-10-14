@@ -3,16 +3,12 @@ import { UrlAttributes as Url } from '../Interfaces/url.interface';
 import { IUrlRepository } from '../repositories/url.repository';
 import * as base62 from 'base62-ts';
 import crypto from 'crypto';
-import { IUserService, UserService } from '../services/user.service';
-import {
-  IUserRepository,
-  UserRepository,
-} from '../repositories/user.repository';
+import { IUserService } from '../services/user.service';
 
 export interface IUrlService {
   createShortUrl: (urlDto: UrlDTO, firebaseId: string) => Promise<Url>;
   getOriginalUrl: (shortId: string) => Promise<string | null>;
-  getAll: () => Promise<Url[]>;
+  getAll: (firebaseId: string) => Promise<Url[]>;
   update: (id: number, urlDto: UrlDTO) => Promise<number[]>;
 }
 
@@ -25,11 +21,13 @@ export class UrlService implements IUrlService {
   async update(id: number, urlDto: UrlDTO): Promise<number[]> {
     const { originalUrl } = urlDto;
 
-    const result = await this.urlRepository.update(id, {
+    const urlToUpdate = await this.urlRepository.getById(id);
+
+    if (urlToUpdate?.deletedAt) return [0];
+
+    return await this.urlRepository.update(id, {
       originalUrl,
     });
-
-    return result;
   }
 
   async createShortUrl(urlDto: UrlDTO, firebaseId: string): Promise<Url> {
@@ -83,8 +81,14 @@ export class UrlService implements IUrlService {
     return originalUrl;
   }
 
-  async getAll(): Promise<Url[]> {
-    return this.urlRepository.getAll();
+  async getAll(firebaseId: string): Promise<Url[]> {
+    const user = await this.userService.getByFirebaseId(firebaseId);
+
+    if (user) {
+      return this.urlRepository.getAllByUserId(user.id);
+    }
+
+    return [] as Url[];
   }
 
   private getHash(originalUrl: string): string {
