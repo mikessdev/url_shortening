@@ -73,7 +73,7 @@ export class UserService implements IUserService {
       } as User;
 
       return await this.userRepository.create(user);
-    } catch (error) {
+    } catch (error: any) {
       return error.code || 'An unexpected error occurred';
     }
   }

@@ -1,42 +1,66 @@
-import { UrlController, IUrlController } from '../controllers/url.controller';
-import { IUrlService } from '../services/url.service';
 import { Request, Response } from 'express';
+import { UrlController } from '../controllers/url.controller';
+import { IUrlService } from '../services/url.service';
+import { validate } from 'class-validator';
+
+jest.mock('../middlewares/auth.middleware', () => {
+  return jest.fn().mockImplementation(() => {
+    return {
+      firebase: {
+        auth: () => ({
+          verifyIdToken: jest.fn().mockResolvedValue({ uid: 'firebase_id' }),
+        }),
+      },
+    };
+  });
+});
+
+jest.mock('class-validator');
+jest.mock('class-transformer');
 
 describe('UrlController', () => {
-  let urlController: IUrlController;
-  let urlServiceMock: IUrlService;
+  let urlController: UrlController;
+  let urlService: IUrlService;
   let req: Partial<Request>;
   let res: Partial<Response>;
+  let next: jest.Mock;
 
   beforeEach(() => {
-    urlServiceMock = {
+    urlService = {
       createShortUrl: jest.fn(),
       getOriginalUrl: jest.fn(),
       getAll: jest.fn(),
-    };
+      update: jest.fn(),
+    } as unknown as IUrlService;
 
-    urlController = new UrlController(urlServiceMock);
-
+    urlController = new UrlController(urlService);
     req = {
-      body: {},
       params: {},
+      body: {},
+      headers: {},
     };
-
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
       redirect: jest.fn(),
     };
+    next = jest.fn();
   });
 
-  describe('shortenUrl', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('update', () => {
     it('should return 400 if validation fails', async () => {
+      (validate as jest.Mock).mockResolvedValueOnce([
+        { message: 'Validation error' },
+      ]);
+
+      req.params = { id: '1' };
       req.body = { originalUrl: '' };
 
-      const result = await urlController.shortenUrl(
-        req as Request,
-        res as Response
-      );
+      await urlController.update(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
@@ -45,30 +69,78 @@ describe('UrlController', () => {
       });
     });
 
-    it('should return 201 and the shortened URL on success', async () => {
-      req.body = { originalUrl: 'http://example.com' };
-      const shortUrl = { shortenedUrl: 'abc123' };
+    it('should update URL and return 200', async () => {
+      (validate as jest.Mock).mockResolvedValueOnce([]);
+      req.params = { id: '1' };
+      req.body = { originalUrl: 'https://example.com' };
 
-      (urlServiceMock.createShortUrl as jest.Mock).mockResolvedValue(shortUrl);
+      urlService.update = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 1, originalUrl: 'https://example.com' });
 
-      const result = await urlController.shortenUrl(
-        req as Request,
-        res as Response
-      );
+      await urlController.update(req as Request, res as Response);
 
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ shortUrl });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        updatedUrl: { id: 1, originalUrl: 'https://example.com' },
+      });
     });
 
-    it('should return 500 if service returns null', async () => {
-      req.body = { originalUrl: 'http://example.com' };
+    it('should return 500 if update fails', async () => {
+      (validate as jest.Mock).mockResolvedValueOnce([]);
+      req.params = { id: '1' };
+      req.body = { originalUrl: 'https://example.com' };
 
-      (urlServiceMock.createShortUrl as jest.Mock).mockResolvedValue(null);
+      urlService.update = jest.fn().mockResolvedValueOnce(null);
 
-      const result = await urlController.shortenUrl(
-        req as Request,
-        res as Response
+      await urlController.update(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Error updating URL' });
+    });
+  });
+
+  describe('shortenUrl', () => {
+    it('should return 400 if validation fails', async () => {
+      (validate as jest.Mock).mockResolvedValueOnce([
+        { message: 'Validation error' },
+      ]);
+
+      req.body = { originalUrl: '' };
+
+      await urlController.shortenUrl(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Validation failed',
+        errors: expect.any(Array),
+      });
+    });
+
+    it('should create short URL and return 201', async () => {
+      (validate as jest.Mock).mockResolvedValueOnce([]);
+      req.body = { originalUrl: 'https://example.com' };
+      req.headers = { authorization: 'Bearer some_token' };
+
+      const firebaseId = 'firebase_id';
+      (urlService.createShortUrl as jest.Mock).mockResolvedValueOnce(
+        'short_url'
       );
+
+      await urlController.shortenUrl(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({ shortUrl: 'short_url' });
+    });
+
+    it('should return 500 if creating short URL fails', async () => {
+      (validate as jest.Mock).mockResolvedValueOnce([]);
+      req.body = { originalUrl: 'https://example.com' };
+      req.headers = { authorization: 'Bearer some_token' };
+
+      (urlService.createShortUrl as jest.Mock).mockResolvedValueOnce(null);
+
+      await urlController.shortenUrl(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
@@ -78,53 +150,47 @@ describe('UrlController', () => {
   });
 
   describe('redirectUrl', () => {
-    it('should redirect to the original URL if found', async () => {
-      req.params = { shortId: 'abc123' };
-      const originalUrl = 'http://example.com';
+    it('should redirect to the original URL', async () => {
+      req.params = { shortId: 'short_id' };
+      urlService.getOriginalUrl = jest
+        .fn()
+        .mockResolvedValueOnce('https://original.com');
 
-      (urlServiceMock.getOriginalUrl as jest.Mock).mockResolvedValue(
-        originalUrl
-      );
+      await urlController.redirectUrl(req as Request, res as Response);
 
-      const result = await urlController.redirectUrl(
-        req as Request,
-        res as Response
-      );
-
-      expect(res.redirect).toHaveBeenCalledWith(originalUrl);
+      expect(res.redirect).toHaveBeenCalledWith('https://original.com');
     });
 
-    it('should return 404 if the original URL is not found', async () => {
-      req.params = { shortId: 'abc123' };
+    it('should return 404 if URL not found', async () => {
+      req.params = { shortId: 'short_id' };
+      urlService.getOriginalUrl = jest.fn().mockResolvedValueOnce(null);
 
-      (urlServiceMock.getOriginalUrl as jest.Mock).mockResolvedValue(null);
-
-      const result = await urlController.redirectUrl(
-        req as Request,
-        res as Response
-      );
+      await urlController.redirectUrl(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ message: 'URL not found' });
     });
   });
 
-  describe('getAll', () => {
-    it('should return 201 and all URLs', async () => {
-      const urls = [
-        { originalUrl: 'http://example.com', shortenedUrl: 'abc123' },
-        { originalUrl: 'http://example2.com', shortenedUrl: 'def456' },
-      ];
+  describe('getAllByUser', () => {
+    it('should return 403 if user is not found', async () => {
+      req.headers = { authorization: 'Bearer some_token' };
+      urlService.getAll = jest.fn().mockResolvedValueOnce([]);
 
-      (urlServiceMock.getAll as jest.Mock).mockResolvedValue(urls);
-
-      const result = await urlController.getAll(
-        req as Request,
-        res as Response
-      );
+      await urlController.getAllByUser(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ result: urls });
+      expect(res.json).toHaveBeenCalledWith({ result: [] });
+    });
+
+    it('should return all URLs for the user', async () => {
+      req.headers = { authorization: 'Bearer some_token' };
+      urlService.getAll = jest.fn().mockResolvedValueOnce(['url1', 'url2']);
+
+      await urlController.getAllByUser(req as Request, res as Response);
+
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({ result: ['url1', 'url2'] });
     });
   });
 });
