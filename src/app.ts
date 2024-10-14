@@ -23,7 +23,7 @@ export class App {
     const urlRoutes = new UrlRoutes();
     const userRoutes = new UserRoutes();
 
-    this.app.use('/url', urlRoutes.router);
+    this.app.use('/', urlRoutes.router);
     this.app.use('/user', userRoutes.router);
   }
 

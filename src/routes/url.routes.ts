@@ -5,6 +5,7 @@ import { IUrlRepository, UrlRepository } from '../repositories/url.repository';
 import AuthMiddleware from '../middlewares/auth.middleware';
 import { UserRepository } from '../repositories/user.repository';
 import { UserService } from '../services/user.service';
+
 export class UrlRoutes {
   public router: Router;
   private urlController: IUrlController;
@@ -30,20 +31,21 @@ export class UrlRoutes {
       '/',
       this.wrapAsync(this.urlController.shortenUrl.bind(this.urlController))
     );
+
     this.router.get(
       '/:shortId',
       this.wrapAsync(this.urlController.redirectUrl.bind(this.urlController))
     );
 
-    this.router.use(this.authMiddleware.authenticate.bind(this.authMiddleware));
-
     this.router.get(
-      '/',
+      '/url/findAll',
+      this.authMiddleware.authenticate.bind(this.authMiddleware),
       this.wrapAsync(this.urlController.getAll.bind(this.urlController))
     );
 
     this.router.put(
-      '/',
+      '/url/update',
+      this.authMiddleware.authenticate.bind(this.authMiddleware),
       this.wrapAsync(this.urlController.update.bind(this.urlController))
     );
   }

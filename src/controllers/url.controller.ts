@@ -55,8 +55,11 @@ export class UrlController implements IUrlController {
         const userCredential = await this.authProvider.firebase
           .auth()
           .verifyIdToken(authorization.replace('Bearer ', ''));
+
         firebaseId = userCredential.uid;
-      } catch (error) {}
+      } catch (error) {
+        return res.status(403).json({ message: 'User not found' });
+      }
     }
 
     const shortUrl = await this.urlService.createShortUrl(urlDto, firebaseId);
