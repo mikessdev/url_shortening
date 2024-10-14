@@ -3,6 +3,8 @@ import { errorHandler } from './middlewares/error.middleware';
 import { UrlRoutes } from './routes/url.routes';
 import { UserRoutes } from './routes/user.routes';
 import appDataSource from './config/database';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsDoc from 'swagger-jsdoc';
 
 export class App {
   private app: express.Application;
@@ -11,7 +13,7 @@ export class App {
     this.app = express();
     this.initializeMiddlewares();
     this.initializeRoutes();
-    this.initializeDatabase();
+    this.initializeSwagger();
   }
 
   private initializeMiddlewares(): void {
@@ -25,6 +27,27 @@ export class App {
 
     this.app.use('/', urlRoutes.router);
     this.app.use('/user', userRoutes.router);
+  }
+
+  private initializeSwagger(): void {
+    const swaggerOptions = {
+      definition: {
+        openapi: '3.0.0',
+        info: {
+          title: 'My API',
+          version: '1.0.0',
+          description: 'API documentation',
+        },
+      },
+      apis: ['./src/routes/*.ts'],
+    };
+
+    const swaggerDocs = swaggerJsDoc(swaggerOptions);
+    this.app.use(
+      '/swagger/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerDocs)
+    );
   }
 
   private async initializeDatabase(): Promise<void> {

@@ -1,5 +1,7 @@
 # url_shortening
 
+swagger: https://localhost:3000/swagger/api-docs
+
 ## Versões
 
 Node: 20.18.0

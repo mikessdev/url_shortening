@@ -27,22 +27,110 @@ export class UrlRoutes {
   }
 
   private initializeRoutes(): void {
+    /**
+     * @swagger
+     * /:
+     *   post:
+     *     summary: Create shorten a URL
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               longUrl:
+     *                 type: string
+     *     responses:
+     *       201:
+     *         description: URL shortened successfully
+     *       400:
+     *         description: Bad request
+     *       500:
+     *         description: An unexpected error occurred
+     */
     this.router.post(
       '/',
       this.wrapAsync(this.urlController.shortenUrl.bind(this.urlController))
     );
 
+    /**
+     * @swagger
+     * /{shortId}:
+     *   get:
+     *     summary: Redirect to the long URL
+     *     parameters:
+     *       - in: path
+     *         name: shortId
+     *         required: true
+     *         description: The short ID of the URL
+     *         schema:
+     *           type: string
+     *     responses:
+     *       302:
+     *         description: Redirects to the long URL
+     *       404:
+     *         description: URL not found
+     *       500:
+     *         description: An unexpected error occurred
+     */
     this.router.get(
       '/:shortId',
       this.wrapAsync(this.urlController.redirectUrl.bind(this.urlController))
     );
 
+    /**
+     * @swagger
+     * /url/getAll:
+     *   get:
+     *     summary: Get all URLs for a user
+     *     security:
+     *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: A list of URLs
+     *       401:
+     *         description: Unauthorized
+     *       500:
+     *         description: An unexpected error occurred
+     */
     this.router.get(
       '/url/getAll',
       this.authMiddleware.authenticate.bind(this.authMiddleware),
       this.wrapAsync(this.urlController.getAllByUser.bind(this.urlController))
     );
 
+    /**
+     * @swagger
+     * /url/update/{id}:
+     *   put:
+     *     summary: Update a URL
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         description: The ID of the URL to update
+     *         schema:
+     *           type: string
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               longUrl:
+     *                 type: string
+     *     responses:
+     *       200:
+     *         description: URL updated successfully
+     *       400:
+     *         description: Bad request
+     *       404:
+     *         description: URL not found
+     *       500:
+     *         description: An unexpected error occurred
+     */
     this.router.put(
       '/url/update/:id',
       this.authMiddleware.authenticate.bind(this.authMiddleware),
