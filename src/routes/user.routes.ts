@@ -31,6 +31,7 @@ export class UserRoutes {
      * /user:
      *   post:
      *     summary: Create a new user
+     *     tags: [USER]
      *     requestBody:
      *       required: true
      *       content:
@@ -62,6 +63,7 @@ export class UserRoutes {
      * /user/login:
      *   post:
      *     summary: User login
+     *     tags: [USER]
      *     requestBody:
      *       required: true
      *       content:

@@ -1,12 +1,16 @@
 # url_shortening
 
-swagger: https://localhost:3000/swagger/api-docs
+swagger: localhost:3000/swagger/api-docs
 
 ## Versões
 
 Node: 20.18.0
+
 Npm: 10.8.2
+
 Docker: 27.2.1 (build 9e34c9bb39)
+
+# Para rodar o projeto basta apenas executar o comando abaixo em ordem.
 
 ## Instalando dependências
 
@@ -26,12 +30,6 @@ Para rodar as migrations, execute os seguintes comandos:
 
 ```bash
 npx sequelize-cli db:migrate
-```
-
-Para reverter as migrações, execute os seguintes comandos:
-
-```bash
-npx sequelize-cli db:migrate:undo:all
 ```
 
 ## Rodando o projeto

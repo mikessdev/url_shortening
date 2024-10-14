@@ -84,6 +84,7 @@ export class UrlRoutes {
      * /url/getAll:
      *   get:
      *     summary: Get all URLs for a user
+     *     tags: [URL]
      *     security:
      *       - bearerAuth: []
      *     responses:
@@ -106,6 +107,7 @@ export class UrlRoutes {
      * /url/update/{id}:
      *   put:
      *     summary: Update a URL
+     *     tags: [URL]
      *     parameters:
      *       - in: path
      *         name: id
@@ -145,7 +147,7 @@ export class UrlRoutes {
      * /url/delete/{id}:
      *   delete:
      *     summary: Delete a URL
-     *     tags: [URLs]
+     *     tags: [URL]
      *     security:
      *       - bearerAuth: []
      *     parameters:
