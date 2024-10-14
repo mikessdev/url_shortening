@@ -10,6 +10,7 @@ export interface IUrlController {
   redirectUrl: (req: Request, res: Response) => Promise<Response | void>;
   getAllByUser: (req: Request, res: Response) => Promise<Response | void>;
   update: (req: Request, res: Response) => Promise<Response | void>;
+  delete: (req: Request, res: Response) => Promise<Response | void>;
 }
 
 export class UrlController implements IUrlController {
@@ -101,5 +102,17 @@ export class UrlController implements IUrlController {
 
     const result = await this.urlService.getAll(firebaseId);
     return res.status(201).json({ result });
+  }
+
+  async delete(req: Request, res: Response): Promise<Response | void> {
+    const { id } = req.params;
+
+    const deleted = await this.urlService.deleteUrl(Number(id));
+
+    if (deleted[0] === 0) {
+      return res.status(404).json({ message: 'URL not found' });
+    }
+
+    return res.status(200).json({ message: 'URL deleted successfully' });
   }
 }

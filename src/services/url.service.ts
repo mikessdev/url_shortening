@@ -10,6 +10,7 @@ export interface IUrlService {
   getOriginalUrl: (shortId: string) => Promise<string | null>;
   getAll: (firebaseId: string) => Promise<Url[]>;
   update: (id: number, urlDto: UrlDTO) => Promise<number[]>;
+  deleteUrl: (id: number) => Promise<Number[]>;
 }
 
 export class UrlService implements IUrlService {
@@ -103,5 +104,9 @@ export class UrlService implements IUrlService {
 
   private generateRandomSalt(): string {
     return crypto.randomBytes(4).toString('hex');
+  }
+
+  async deleteUrl(id: number): Promise<Number[]> {
+    return await this.urlRepository.update(id, { deletedAt: new Date() });
   }
 }

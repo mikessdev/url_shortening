@@ -39,7 +39,7 @@ export class UrlRoutes {
      *           schema:
      *             type: object
      *             properties:
-     *               longUrl:
+     *               originalUrl:
      *                 type: string
      *     responses:
      *       201:
@@ -102,6 +102,7 @@ export class UrlRoutes {
 
     /**
      * @swagger
+     *
      * /url/update/{id}:
      *   put:
      *     summary: Update a URL
@@ -119,13 +120,15 @@ export class UrlRoutes {
      *           schema:
      *             type: object
      *             properties:
-     *               longUrl:
+     *               originalUrl:
      *                 type: string
      *     responses:
      *       200:
      *         description: URL updated successfully
      *       400:
      *         description: Bad request
+     *       401:
+     *         description: Unauthorized
      *       404:
      *         description: URL not found
      *       500:
@@ -135,6 +138,40 @@ export class UrlRoutes {
       '/url/update/:id',
       this.authMiddleware.authenticate.bind(this.authMiddleware),
       this.wrapAsync(this.urlController.update.bind(this.urlController))
+    );
+
+    /**
+     * @swagger
+     * /url/delete/{id}:
+     *   delete:
+     *     summary: Delete a URL
+     *     tags: [URLs]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         description: The ID of the URL to delete
+     *         schema:
+     *           type: string
+     *     responses:
+     *       200:
+     *         description: URL deleted successfully
+     *       400:
+     *         description: Bad request
+     *       401:
+     *         description: Unauthorized
+     *       404:
+     *         description: URL not found
+     *       500:
+     *         description: An unexpected error occurred
+     */
+
+    this.router.delete(
+      '/url/delete/:id',
+      this.authMiddleware.authenticate.bind(this.authMiddleware),
+      this.wrapAsync(this.urlController.delete.bind(this.urlController))
     );
   }
 
